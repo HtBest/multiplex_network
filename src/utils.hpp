@@ -4,7 +4,7 @@ vector<double> sampleDistribution(int n, int minv, int maxv)
 {
     assert(maxv < 1 << 15);
     std::normal_distribution<> dis(0.5, 0.2);
-    vector<double> p(n, 0);
+    vector<double> p(maxv, 0);
     int M = maxv * maxv;
     for (int i = 0; i < M; ++i)
     {
