@@ -55,3 +55,7 @@ struct Graph
         }
     }
 };
+
+pair<vector<pair<int, int>>, vector<tuple<int, int, int>>> DDtoD(int n, vector<tuple<int, int, double>> DD);
+void generate(int n, vector<tuple<int, int, int>> e, Graph &g, vector<int> deg);
+pair<Graph, Graph> generate(int n, double d, vector<tuple<int, int, double>> DD1, vector<tuple<int, int, double>> DD2);
