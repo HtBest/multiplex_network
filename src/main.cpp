@@ -49,7 +49,7 @@ pair<vector<pair<int, int>>, vector<tuple<int, int, int>>> DDtoD(int n, vector<t
     vector<pair<int, int>> res1;
     for (int i = 1; i < n; ++i)
     {
-        if (ni[i] == 0)
+        if (ni[i] < 1)
             continue;
         res1.push_back({i, ni[i]});
     }
@@ -233,7 +233,7 @@ void generate(int n, double d, vector<tuple<int, int, double>> DD1, vector<tuple
 }
 int main(int argc, char *argv[])
 {
-    constexpr int n = 30;
+    constexpr int n = 1e4;
     auto dis = sampleDistribution(n, 3, 10);
 
     double sum = 0;
@@ -253,21 +253,21 @@ int main(int argc, char *argv[])
             dis2d[i][j] /= sum;
         }
     }
-    // for (int i = 0, cnt = 0; i < n * n & cnt < 1e7; ++i, ++cnt)
-    // {
-    //     int a = rnd() % n, b = rnd() % n, c = rnd() % n, d = rnd() % n;
-    //     if (a > b)
-    //         swap(a, b);
-    //     if (c > d)
-    //         swap(c, d);
-    //     if (dis2d1[a][c] < 1.0 / (n * n))
-    //     {
-    //         i--;
-    //         continue;
-    //     }
-    //     dis2d1[a][c] -= 1 / (n * n);
-    //     dis2d1[b][d] += 1 / (n * n);
-    // }
+    for (int i = 0, cnt = 0; i < n * n & cnt < 1e7; ++i, ++cnt)
+    {
+        int a = rnd() % n, b = rnd() % n, c = rnd() % n, d = rnd() % n;
+        if (a > b)
+            swap(a, b);
+        if (c > d)
+            swap(c, d);
+        if (dis2d1[a][c] < 1.0 / (n * n))
+        {
+            i--;
+            continue;
+        }
+        dis2d1[a][c] -= 1 / (n * n);
+        dis2d1[b][d] += 1 / (n * n);
+    }
 
     // validate(dis2d1, dis2d);
     vector<tuple<int, int, double>> input;

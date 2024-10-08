@@ -39,5 +39,19 @@ struct Graph
         {
             printf("%d %d\n", edge[i].a, edge[i].b);
         }
+        // printDistribution();
+    }
+    void printDistribution()
+    {
+        vector<int> deg(n);
+        for (int i = 0; i < n; ++i)
+        {
+            deg[i] = degree(i);
+        }
+        sort(deg.begin(), deg.end());
+        for (int i = 0; i < n; ++i)
+        {
+            printf("%d%c", deg[i], " \n"[i == n - 1]);
+        }
     }
 };
