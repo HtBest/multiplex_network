@@ -18,7 +18,7 @@ bool sample(double p)
 template <typename T>
 struct Node
 {
-    T rate1, rate2;
+    T US, UI, AS, AI;
 };
 template <>
 struct Node<int>
@@ -36,54 +36,57 @@ public:
     {
         nodes.resize(n);
         for (int i = 0; i < n; ++i)
-            nodes[i].rate1 = i < n * initIRate ? 1 : 0;
-        for (int i = 0; i < n; ++i)
-            swap(nodes[i], nodes[rnd() % n]);
-        for (int i = 0; i < n; ++i)
-            nodes[i].rate2 = i < n * initARate ? 1 : 0;
-        for (int i = 0; i < n; ++i)
-            swap(nodes[i], nodes[rnd() % n]);
+        {
+            nodes[i].AI = initARate * initIRate;
+            nodes[i].AS = initARate * (1 - initIRate);
+            nodes[i].UI = (1 - initARate) * initIRate;
+            nodes[i].US = (1 - initARate) * (1 - initIRate);
+            nodes[i].AI += nodes[i].UI;
+            nodes[i].UI = 0;
+        }
+    }
+    T f(int i, const Graph &g1, const Graph &g2)
+    {
+        T cnta = 0, cnt = 0;
+        for (int i = g1.head[i]; i; i = g1.edge[i].next)
+        {
+            int b = g1.edge[i].b;
+            cnta += nodes[b].AI + nodes[b].AS;
+            cnt++;
+        }
+        return 1 / (1 + exp(-cnta - cnt / 2));
     }
     void next(const Graph &g1, const Graph &g2)
     {
         int n = this->nodes.size();
         vector<Node<T>> nodes = this->nodes;
+        vector<T> qa(n), qu(n), r(n);
         for (int i = 0; i < n; ++i)
         {
-            if (nodes[i].rate1 == S1::I)
+            qa[i] = 1;
+            qu[i] = 1;
+            r[i] = 1;
+            for (int j = g2.head[i]; j; j = g2.edge[j].next)
             {
-                if (sample(this->mu))
-                    this->nodes[i].state1 = S1::S;
+                int b = g2.edge[j].b;
+                qa[i] *= (1 - (nodes[b].AI + nodes[b].UI) * betaa);
+                qu[i] *= (1 - (nodes[b].AI + nodes[b].UI) * betau);
             }
-            else
+            for (int j = g1.head[i]; j; j = g1.edge[j].next)
             {
-                for (int j = g1.head[i]; j; j = g1.edge[j].next)
-                {
-                    int b = g1.edge[j].b;
-                    if (nodes[b].state1 == S1::I && sample(nodes[b].state2 == S2::U ? this->betau : this->betaa))
-                    {
-                        this->nodes[i].state1 = S1::I;
-                        break;
-                    }
-                }
+                int b = g1.edge[j].b;
+                r[i] *= (1 - (nodes[b].AS + nodes[b].AI) * lambda * f(i, g1, g2));
             }
-            if (nodes[i].state2 == S2::A)
-            {
-                if (sample(this->delta))
-                    this->nodes[i].state2 = S2::U;
-            }
-            else
-            {
-                for (int j = g2.head[i]; j; j = g2.edge[j].next)
-                {
-                    int b = g1.edge[j].b;
-                    if (nodes[b].state2 == S2::A && sample(this->lambda))
-                    {
-                        this->nodes[i].state2 = S2::A;
-                        break;
-                    }
-                }
-            }
+        }
+        for (int i = 0; i < n; ++i)
+        {
+            //             \begin { equation }
+            //             \begin{aligned} p_i ^ { US }(t + 1) &= p_i ^ { US }(t)r_i(t) q_i ^ U(t) + p_i ^ { AS }(t)\delta q_i ^ U(t) \ p_i ^ { AS }(t + 1) &= p_i ^ { US }(t)(1 - r_i(t)) q_i ^ A(t) + p_i ^ { AS }(t)(1 - \delta) q_i ^ A(t) + p_i ^ { AI }(t)\mu \ p_i ^ { AI }(t + 1) &= p_i ^ { US }(t)r_i(t)(1 - q_i ^ U(t)) + p_i ^ { US }(t)(1 - r_i(t))(1 - q_i ^ A(t)) \ & \quad + p_i ^ { AS }(t)\delta(1 - q_i ^ U(t)) + p_i ^ { AS }(t)(1 - \delta)(1 - q_i ^ A(t)) \ & \quad + p_i ^ { AI }(t)(1 - \mu)
+            // \end { aligned }
+            //             \end { equation }
+            this->nodes[i].US = nodes[i].US * r[i] * qu[i] + nodes[i].AS * delta * qu[i];
+            this->nodes[i].AS = nodes[i].US * (1 - r[i]) * qa[i] + nodes[i].AS * (1 - delta) * qa[i] + nodes[i].AI * mu;
+            this->nodes[i].AI = nodes[i].US * r[i] * (1 - qu[i]) + nodes[i].US * (1 - r[i]) * (1 - qa[i]) + nodes[i].AS * delta * (1 - qu[i]) + nodes[i].AS * (1 - delta) * (1 - qa[i]) + nodes[i].AI * (1 - mu);
         }
     }
 };
@@ -196,18 +199,16 @@ int main(int argc, char *argv[])
     }
     auto [g1, g2] = generate(n, 2, input, input);
     n = g1.n;
-    Model<int> model(n, 0.15, 0.1, 0.1, 0.1, 0.1, 0.001, 0.001);
+    Model<double> model(n, 0.15, 0.1, 0.1, 0.1, 0.1, 0.001, 0.001);
+    // Model<double> model2(n, 0.15, 0.1, 0.1, 0.1, 0.1, 0.001, 0.001);
     int T = 100;
     for (int t = 0; t < T; ++t)
     {
-        int cnt = 0;
+        double cnt = 0;
         model.next(g1, g2);
         for (int i = 0; i < n; ++i)
         {
-            if (model.nodes[i].state1 == S1::I)
-            {
-                cnt++;
-            }
+            cnt += model.nodes[i].AI;
         }
         cout << cnt << endl;
     }
