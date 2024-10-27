@@ -146,6 +146,7 @@ void Model<int>::next(const Graph &g1, const Graph &g2)
         }
     }
 }
+
 int main(int argc, char *argv[])
 {
     int n = 1e4;
@@ -204,13 +205,16 @@ int main(int argc, char *argv[])
     int T = 100;
     for (int t = 0; t < T; ++t)
     {
-        double cnt = 0;
+        double cnt1 = 0, cnt2 = 0;
         model.next(g1, g2);
         for (int i = 0; i < n; ++i)
         {
-            cnt += model.nodes[i].AI;
+            cnt1 += model.nodes[i].AI;
+            cnt2 += model.nodes[i].AS + model.nodes[i].AI;
         }
-        cout << cnt << endl;
+        cnt1 /= n;
+        cnt2 /= n;
+        printf("T = %d: pI = %.2lf%% pA = %.2lf%%\n", t, cnt1 * 100, cnt2 * 100);
     }
     return 0;
 }
