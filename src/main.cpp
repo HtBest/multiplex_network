@@ -200,9 +200,35 @@ int main(int argc, char *argv[])
     }
     auto [g1, g2] = generate(n, 2, input, input);
     n = g1.n;
-    Model<double> model(n, 0.15, 0.1, 0.1, 0.1, 0.1, 0.001, 0.001);
+    for (double i = 0; i < 1; i += 0.01)
+    {
+        for (double j = 0; j < 1; j += 0.01)
+        {
+            double oldcnt = 1e2;
+            Model<double> model(n, i, i * 2 / 3, j, 0.1, 0.2, 0.001, 0.001);
+            for (int t = 0;; ++t)
+            {
+                double cnt1 = 0, cnt2 = 0;
+                model.next(g1, g2);
+                for (int i = 0; i < n; ++i)
+                {
+                    cnt1 += model.nodes[i].AI;
+                    cnt2 += model.nodes[i].AS + model.nodes[i].AI;
+                }
+                cnt1 /= n;
+                cnt2 /= n;
+                if (abs(cnt1 - oldcnt) < 1e-6 || t > 1e4)
+                    break;
+                oldcnt = cnt1;
+                // printf("T = %d: pI = %.2lf%% pA = %.2lf%%\n", t, cnt1 * 100, cnt2 * 100);
+            }
+            printf("%.2lf %.2lf %.5lf\n", i, j, oldcnt);
+        }
+    }
+    exit(0);
+    Model<double> model(n, 0.15, 0.1, 0.7, 0.1, 0.2, 0.0001, 0.0001);
     // Model<double> model2(n, 0.15, 0.1, 0.1, 0.1, 0.1, 0.001, 0.001);
-    int T = 100;
+    int T = 200;
     for (int t = 0; t < T; ++t)
     {
         double cnt1 = 0, cnt2 = 0;
